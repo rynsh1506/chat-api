@@ -13,3 +13,49 @@ datasource db {
 generator dbml {
   provider = "prisma-dbml-generator"
 }
+
+model User {
+  id             String @id @default(uuid()) @map("user_id")
+  email          String @unique @map("user_email") @db.VarChar(255)
+  full_name      String @map("user_full_name") @db.VarChar(255)
+  image_profile  String @map("user_image_profile") @db.VarChar(255)
+  remember_token String @map("user_remember_token")
+
+  verified_at DateTime? @map("user_verified_at") @db.Timestamptz()
+  create_at   DateTime  @default(now()) @db.Timestamptz()
+  updated_at  DateTime  @updatedAt @db.Timestamptz()
+
+  chat_room ChatRoom[]
+  message   Message[]
+
+  @@map("users")
+}
+
+model ChatRoom {
+  id   String @id @default(uuid()) @map("chat_room_id")
+  name String @map("chat_room_name")
+
+  create_at  DateTime @default(now()) @db.Timestamptz()
+  updated_at DateTime @updatedAt @db.Timestamptz()
+
+  user    User[]
+  message Message[]
+
+  @@map("chat_rooms")
+}
+
+model Message {
+  id      String  @id @default(uuid()) @map("message_id")
+  content String
+  image   String?
+
+  create_at  DateTime @default(now()) @db.Timestamptz()
+  updated_at DateTime @updatedAt @db.Timestamptz()
+
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id      String
+  chat_room    ChatRoom @relation(fields: [chat_room_id], references: [id], onDelete: Cascade)
+  chat_room_id String
+
+  @@map("messages")
+}

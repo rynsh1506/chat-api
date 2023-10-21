@@ -1,0 +1,46 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  email String [unique, not null]
+  full_name String [not null]
+  image_profile String [not null]
+  remember_token String [not null]
+  verified_at DateTime
+  create_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  chat_room chat_rooms [not null]
+  message messages [not null]
+}
+
+Table chat_rooms {
+  id String [pk]
+  name String [not null]
+  create_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  user users [not null]
+  message messages [not null]
+}
+
+Table messages {
+  id String [pk]
+  content String [not null]
+  image String
+  create_at DateTime [default: `now()`, not null]
+  updated_at DateTime [not null]
+  user users [not null]
+  user_id String [not null]
+  chat_room chat_rooms [not null]
+  chat_room_id String [not null]
+}
+
+Table ChatRoomToUser {
+  chat_roomId String [ref: > chat_rooms.id]
+  userId String [ref: > users.id]
+}
+
+Ref: messages.user_id > users.id [delete: Cascade]
+
+Ref: messages.chat_room_id > chat_rooms.id [delete: Cascade]
