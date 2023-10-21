@@ -8,11 +8,11 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install app dependencies
-RUN npm install
+RUN yarn install
 
 COPY . .
 
-RUN npm run build
+RUN yarn run build
 
 FROM node:18.18.2-bookworm-slim
 
