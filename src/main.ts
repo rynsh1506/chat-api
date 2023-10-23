@@ -1,4 +1,4 @@
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -9,12 +9,27 @@ import type {
   NestConfig,
   SwaggerConfig,
 } from './common/configs/config.interface';
+import * as graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Validation
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      exceptionFactory: (errors) => {
+        const formattedErrors = errors.reduce((accumulator, error) => {
+          accumulator[error.property] = Object.values(error.constraints).join(
+            ', '
+          );
+          return accumulator;
+        }, {});
+        throw new BadRequestException(formattedErrors);
+      },
+    })
+  );
 
   // enable shutdown hook
   const prismaService: PrismaService = app.get(PrismaService);
@@ -43,8 +58,22 @@ async function bootstrap() {
 
   // Cors
   if (corsConfig.enabled) {
-    app.enableCors();
+    app.enableCors({
+      origin: 'http://localhost:5173',
+      credentials: true,
+      allowedHeaders: [
+        'Accept',
+        'Authorization',
+        'Content-Type',
+        'X-Requested-With',
+        'apollo-require-preflight',
+      ],
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    });
   }
+
+  // Graphql Upload
+  app.use(graphqlUploadExpress({ maxSize: 10000000000, maxFiles: 1 }));
 
   await app.listen(process.env.PORT || nestConfig.port || 3000);
 }
